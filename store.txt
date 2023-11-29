@@ -1,0 +1,9 @@
+mkdir t
+mkdir t1
+ls t
+rm t
+mkdir t
+cd t
+mkdir ty
+cd ..
+rm t
