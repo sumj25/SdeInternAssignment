@@ -56,7 +56,7 @@ rl.on("line", (input) => {
 
 // Handle close event (e.g., when the user types 'exit' or closes the application)
 rl.on("close", () => {
-  console.log("Exiting...");
+  commandProcessor.processCommand("exit");
   process.exit(0);
 });
 

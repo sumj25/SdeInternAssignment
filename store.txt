@@ -1,9 +1,1 @@
-mkdir t
-mkdir t1
-ls t
-rm t
-mkdir t
-cd t
-mkdir ty
-cd ..
-rm t
+{"1":{"4":{}},"2":{},"4":{},"text":"\"hello\""}

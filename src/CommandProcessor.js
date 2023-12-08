@@ -1,5 +1,4 @@
 const fs = require("fs");
-
 class CommandProcessor {
   constructor(fileSystem, pathParsed, saveStateParsed) {
     // Initialize the CommandProcessor with references to the file system, path, and save state options
@@ -17,23 +16,15 @@ class CommandProcessor {
         console.error("Error reading file:", err);
         return;
       }
-      // Split the file content into individual commands
-      let commands = data.split("\n");
-      // Remove the last element (empty string) after splitting
-      if (commands.length > 0) {
-        commands.pop();
-        // Process each command from the file
-        commands.forEach((command) => this.processCommand(command, true));
-      }
+      console.log("data==>", data);
+      loadFinalState(this, JSON.parse(data));
     });
   }
 
-  saveStateToFile(command) {
+  saveStateToFile(finalState) {
     // Save a command to a file specified by the pathParsed option
     const filePath = this.pathParsed;
-
-    // Append the command to the file
-    fs.appendFile(filePath, command + "\n", "utf8", (err) => {
+    fs.writeFileSync(filePath, JSON.stringify(finalState), "utf8", (err) => {
       if (err) {
         console.error("Error appending to file:", err);
         return;
@@ -44,9 +35,6 @@ class CommandProcessor {
   processCommand(input, isLoading = false) {
     // Process a command, split it into parts, and execute the corresponding file system method
     const [command, ...args] = input.trim().split(" ");
-    // Save the command to the file if save state is enabled and it's not during loading
-    if (this.saveStateParsed && this.pathParsed && !isLoading)
-      this.saveStateToFile(input);
 
     switch (command) {
       case "mkdir":
@@ -103,6 +91,8 @@ class CommandProcessor {
       case "exit":
         // Exit the command processor
         console.log("Exiting...");
+        if (this.saveStateParsed && this.pathParsed && !isLoading)
+          this.saveStateToFile(createFinalState(this.fileSystem.root));
         process.exit();
         break;
       default:
@@ -113,3 +103,34 @@ class CommandProcessor {
 
 // Export the CommandProcessor class for use in other modules
 module.exports = CommandProcessor;
+
+function createFinalState(fileStructure) {
+  const resultObject = {};
+
+  for (const childNode in fileStructure.content) {
+    console.log("childNode", fileStructure.content[childNode]);
+    if (fileStructure.content[childNode].type === "dir") {
+      resultObject[childNode] = createFinalState(
+        fileStructure.content[childNode]
+      );
+    } else resultObject[childNode] = fileStructure.content[childNode].content;
+  }
+
+  return resultObject;
+}
+
+function loadFinalState(fileSystem, fileStructure) {
+  for (const key in fileStructure) {
+    if (typeof fileStructure[key] === "object") {
+      // Directory
+      fileSystem.processCommand(`mkdir ${key}`);
+      fileSystem.processCommand(`cd ${key}`);
+      loadFinalState(fileSystem, fileStructure[key]);
+      fileSystem.processCommand(`cd ..`);
+    } else {
+      // File with content
+      fileSystem.processCommand(`touch ${key}`);
+      fileSystem.processCommand(`echo ${key} ${fileStructure[key]}`);
+    }
+  }
+}
