@@ -16,7 +16,6 @@ class CommandProcessor {
         console.error("Error reading file:", err);
         return;
       }
-      console.log("data==>", data);
       loadFinalState(this, JSON.parse(data));
     });
   }
@@ -108,7 +107,6 @@ function createFinalState(fileStructure) {
   const resultObject = {};
 
   for (const childNode in fileStructure.content) {
-    console.log("childNode", fileStructure.content[childNode]);
     if (fileStructure.content[childNode].type === "dir") {
       resultObject[childNode] = createFinalState(
         fileStructure.content[childNode]
